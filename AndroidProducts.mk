@@ -1,0 +1,13 @@
+#
+# Copyright (C) 2025 The LineageOS Project
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+PRODUCT_MAKEFILES := \
+    $(LOCAL_DIR)/lineage_lisbon.mk
+
+COMMON_LUNCH_CHOICES := \
+    lineage_lisbon-user \
+    lineage_lisbon-userdebug \
+    lineage_lisbon-eng
