@@ -1,0 +1,130 @@
+on early-init
+   insmod /vendor/lib/modules/sensors_class.ko
+   insmod /vendor/lib/modules/mmi_sys_temp.ko
+   insmod /vendor/lib/modules/goodix_mmi.ko
+   insmod /vendor/lib/modules/exfat.ko
+   insmod /vendor/lib/modules/sx933x_sar.ko
+   insmod /vendor/lib/modules/bq2597x_mmi.ko
+   insmod /vendor/lib/modules/mmi_parallel_charger.ko
+   insmod /vendor/lib/modules/mtk_tpd_mmi.ko
+   insmod /vendor/lib/modules/ilitek_mtk_mmi.ko
+   insmod /vendor/lib/modules/leds_aw99703.ko
+   insmod /vendor/lib/modules/leds_lm3697.ko
+
+on property:ro.build.type=user
+   setprop sys.init_log_level 4
+
+on property:ro.build.type=userdebug
+    insmod /vendor/lib/modules/watchdogtest.ko
+
+on init
+   # Change ownership for for HBM feature
+   chown system system /sys/class/graphics/fb0/hbm
+   # Change ownership for for CABC feature
+   chown system system /sys/class/graphics/fb0/cabc
+
+on late-init
+    #moto algo params
+    chmod 0660 /sys/bus/platform/drivers/mtk_nanohub/algo_params
+    chown system system /sys/bus/platform/drivers/mtk_nanohub/algo_params
+    chown system system /dev/input/event2
+    chown system system /dev/input/event3
+    chown system system /dev/input/event4
+    chown system system /dev/input/event5
+    chown system system /dev/input/event6
+
+# MTK platform sensor
+on post-fs-data
+    # calibration
+    mkdir /data/vendor/sensor 0774 system system
+    # Sensor
+    chmod 0660 /dev/hf_manager
+    chown system system /dev/hf_manager
+    # Change ownership and permission for sensor algo
+    chmod 0660 /sys/class/sensor/m_situ_misc/situparams
+    chown system system /sys/class/sensor/m_situ_misc/situparams
+    chmod 0660 /sys/class/sensor/m_situ_misc/situproxcal
+    chown system system /sys/class/sensor/m_situ_misc/situproxcal
+    # config fingerprint
+    mkdir /data/vendor/.fps 0770 system vendor_fingerp
+    mkdir /mnt/vendor/persist/fps 0770 system system
+
+on boot
+   # change permission for capsensor
+   chmod 0660 /sys/class/capsense/reset
+   chown system system /sys/class/capsense/reset
+   chown radio system /sys/class/capsense/reg
+   chown radio system /sys/class/capsense/fw_download_status
+   chmod 0660 /sys/class/capsense/reg
+   chmod 0660 /sys/class/capsense/fw_download_status
+
+   chown system system /sys/class/sensors/Moto\ CapSense\ Ch0/enable
+   chown system system /sys/class/sensors/Moto\ CapSense\ Ch0/poll_delay
+   chown system system /sys/class/sensors/Moto\ CapSense\ Ch1/enable
+   chown system system /sys/class/sensors/Moto\ CapSense\ Ch1/poll_delay
+   chown system system /sys/class/sensors/Moto\ CapSense\ Ch2/enable
+   chown system system /sys/class/sensors/Moto\ CapSense\ Ch2/poll_delay
+   chown system system /sys/class/sensors/Moto\ CapSense\ Ch3/enable
+   chown system system /sys/class/sensors/Moto\ CapSense\ Ch3/poll_delay
+   chown system system /sys/class/sensors/Moto\ CapSense\ Ch4/enable
+   chown system system /sys/class/sensors/Moto\ CapSense\ Ch4/poll_delay
+   chown system system /sys/class/capsense/int_state
+
+   # change permission for nfc
+   chown nfc nfc /dev/nq-nci
+   chmod 0666 /dev/nq-nci
+   chmod 0660 /dev/aw882xx_smartpa
+   chown system shell /dev/aw882xx_smartpa
+
+   # Change ownership and permission for Bq2597x-charger factory testing
+   chown system system /sys/class/power_supply/bq2597x-master/voltage_now
+   chown system system /sys/class/power_supply/bq2597x-master/charging_enabled
+   chown system system /sys/class/power_supply/bq2597x-slave/charging_enabled
+   chmod 0644 /sys/class/power_supply/bq2597x-master/voltage_now
+   chmod 0664 /sys/class/power_supply/bq2597x-master/charging_enabled
+   chmod 0664 /sys/class/power_supply/bq2597x-slave/charging_enabled
+
+service chipone_ident /vendor/bin/hw/chipone_ident
+    class late_start
+    user system
+    group system input uhid
+    oneshot
+    disabled
+
+service fpc_ident /vendor/bin/hw/fpc_ident
+    class late_start
+    user system
+    group system input uhid
+    oneshot
+    disabled
+
+#fps dual sensor
+service vendor.ident-fps-sh /vendor/bin/init.oem.fingerprint.overlay.sh
+    class late_start
+    user root
+    group drmrpc system
+    oneshot
+
+service vendor.fps-hal-sh /vendor/bin/init.oem.fingerprint2.overlay.sh
+    class late_start
+    user root
+    group system
+    oneshot
+    disabled
+
+service capsense_reset /vendor/bin/capsense_reset
+    class core
+    user system
+    group system input
+    disabled
+
+on property:sys.boot_completed=1
+    start capsense_reset
+    write /proc/driver/thermal/tzpmic_log 0
+
+on fs
+     mkdir /mnt/vendor/persist/fps  0770 system system
+
+# Turn on led to indicate device on in factory mode
+on property:ro.bootmode=mot-factory
+    write /sys/class/leds/charging/brightness 255
