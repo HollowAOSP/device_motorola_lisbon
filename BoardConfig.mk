@@ -30,6 +30,19 @@ DEVICE_MANIFEST_FILE += $(DEVICE_PATH)/configs/vintf/manifest.xml
 DEVICE_MATRIX_FILE := $(DEVICE_PATH)/configs/vintf/compatibility_matrix.xml
 
 # Partitions
+AB_OTA_UPDATER := true
+BOARD_USES_RECOVERY_AS_BOOT := true
+AB_OTA_PARTITIONS += \
+    boot \
+    dtbo \
+    product \
+    system \
+    system_ext \
+    vbmeta \
+    vbmeta_system \
+    vbmeta_vendor \
+    vendor \
+
 BOARD_FLASH_BLOCK_SIZE := 131072
 
 BOARD_BOOTIMAGE_PARTITION_SIZE := 33554432
